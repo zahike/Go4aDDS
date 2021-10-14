@@ -71,8 +71,24 @@ reg  HighVal;
 always @(posedge clk or negedge rstn)
     if (!rstn) HighVal <= 1'b0;
      else if (RegIOup) HighVal <= ~HighVal;
-wire [31:0] WriteData = (!RunSeq) ? vioData :
-                        (HighVal) ? 32'h0cd00d41 : 32'h0c000d3c;
+//wire [31:0] WriteData;// = (!RunSeq) ? vioData :
+                      //  (HighVal) ? 32'h0cd00d41 : 32'h0c000d3c;
+reg[5:0] FerqCount;
+always @(posedge clk or negedge rstn)
+    if (!rstn) FerqCount <= 6'h00;
+     else if (FerqCount == 6'h1f) FerqCount <= 6'h3f;
+     else if (RegIOup) FerqCount <= FerqCount + 1;
+wire [31:0] FreqTUTdata;
+FreqLUT FreqLUT_inst(
+.clk (clk ),
+.rstn(rstn),
+
+.FreqNum ({1'b0,FerqCount}),
+.FreqData(FreqTUTdata)
+    );
+
+wire [31:0] WriteData = (RunSeq) ? FreqTUTdata : vioData ;
+                        
 reg [1:0] DevStart;
 always @(posedge clk or negedge rstn)
     if (!rstn) DevStart <= 2'b00;
